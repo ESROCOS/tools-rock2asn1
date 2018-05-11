@@ -48,6 +48,7 @@ void ${config.asn1SccName}_fromAsn1(${config.cppName}& result, const T & asnVal,
 
 %elif root_type.tag == 'container':
 <% root_type_field = all_info[root_type.rootTypes[0]]%>\
+    result.resize(asnVal.nCount);
     for (int i = 0; i < length_${config.asn1SccParameters[0]}; i++)
     {
 %if root_type_field == 'numeric':
@@ -67,6 +68,7 @@ void ${config.asn1SccName}_fromAsn1(${config.cppName}& result, const T & asnVal,
 %if root_type_field.tag == 'numeric' and root_type.dimFields[loop.index] == '1':
     result.${f} = asnVal.${root_type.asn1SccFields[loop.index]};
 %elif root_type_field.tag == 'numeric' and root_type.dimFields[loop.index]!='1':
+    result.${f}.resize(asnVal.${root_type.asn1SccFields[loop.index]}.nCount);
     for(int i = 0; i < ${root_type.dimFields[loop.index]};i++)
     {
         result.${f}[i] = asnVal.${root_type.asn1SccFields[loop.index]}.arr[i];
@@ -81,7 +83,7 @@ void ${config.asn1SccName}_fromAsn1(${config.cppName}& result, const T & asnVal,
     ${root_type_field.asn1SccName}_fromAsn1(result.${f}, asnVal.${root_type.asn1SccFields[loop.index]});
 %endif
 %elif  root_type_field.tag != 'numeric' and root_type.dimFields[loop.index]!= '1':
-
+    result.${f}.resize(asnVal.${root_type.asn1SccFields[loop.index]}.nCount);
     for(int i = 0; i < ${root_type.dimFields[loop.index]};i++)
     {
 %if root_type.isOpaque[loop.index]:
@@ -131,9 +133,21 @@ void ${config.asn1SccName}_toAsn1(T & result, const ${config.cppName}& baseObj,\
     result.arr[len]='\0';
 
 %elif root_type.tag == 'container':
+<% root_type_field = all_info[root_type.rootTypes[0]]%>\
     for (int i = 0; i < length_${config.asn1SccParameters[0]}; i++)
     {
+%if root_type_field == 'numeric':
         result.arr[i] = baseObj[i];
+%elif  root_type.isOpaque[0]:
+<%opaque_info = opaqueTypes[root_type_field.asnName]%>\
+		${opaque_info.cppMarshall} ${f}_intermediate;
+		${opaque_info.briefName[root_type.idxOpaque[0]]}_toIntermediate(${f}_intermediate, baseObj[i]);
+		${root_type_field.asn1SccName}_toAsn1(result.arr[i], ${f}_intermediate);
+
+%else:
+		${root_type_field.asn1SccName}_toAsn1(result.arr[i], baseObj[i]);
+%endif
+
     }
     result.nCount = length_${config.asn1SccParameters[0]};
 %elif root_type.tag == 'compound':
@@ -147,11 +161,25 @@ void ${config.asn1SccName}_toAsn1(T & result, const ${config.cppName}& baseObj,\
         result.${root_type.asn1SccFields[loop.index]}.arr[i]= baseObj.${f}[i];
     }
 %elif root_type_field.tag != 'numeric' and root_type.dimFields[loop.index]== '1':
+%if root_type.isOpaque[loop.index]:
+<%opaque_info = opaqueTypes[root_type_field.asnName]%>\
+    ${opaque_info.cppMarshall} ${f}_intermediate;
+    ${opaque_info.briefName[root_type.idxOpaque[loop.index]]}_toIntermediate(${f}_intermediate, baseObj.${f});
+    ${root_type_field.asn1SccName}_toAsn1(result.${root_type.asn1SccFields[loop.index]}, ${f}_intermediate);
+%else:
     ${root_type_field.asn1SccName}_toAsn1(result.${root_type.asn1SccFields[loop.index]}, baseObj.${f});
+%endif
 %elif  root_type_field.tag != 'numeric' and root_type.dimFields[loop.index]!= '1':
     for(int i = 0; i < ${root_type.dimFields[loop.index]};i++)
     {
+%if root_type.isOpaque[loop.index]:
+<%opaque_info = opaqueTypes[root_type_field.asnName]%>\
+		${opaque_info.cppMarshall} ${f}_intermediate;
+		${opaque_info.briefName[root_type.idxOpaque[loop.index]]}_fromIntermediate(${f}_intermediate, baseObj.${f}[i]);
+		${root_type_field.asn1SccName}_toAsn1(result.${root_type.asn1SccFields[loop.index]}.arr[i], ${f}_intermediate);
+%else:
         ${root_type_field.asn1SccName}_toAsn1(result.${root_type.asn1SccFields[loop.index]}.arr[i], baseObj.${f}[i]);
+%endif
     }
 %endif
 
