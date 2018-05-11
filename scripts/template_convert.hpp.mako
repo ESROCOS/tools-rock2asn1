@@ -49,7 +49,7 @@ void ${config.asn1SccName}_fromAsn1(${config.cppName}& result, const T & asnVal,
 %elif root_type.tag == 'container':
 <% root_type_field = all_info[root_type.rootTypes[0]]%>\
     result.resize(asnVal.nCount);
-    for (int i = 0; i < length_${config.asn1SccParameters[0]}; i++)
+    for (int i = 0; i < asnVal.nCount; i++)
     {
 %if root_type_field == 'numeric':
         result[i] = asnVal.arr[i];
@@ -69,7 +69,7 @@ void ${config.asn1SccName}_fromAsn1(${config.cppName}& result, const T & asnVal,
     result.${f} = asnVal.${root_type.asn1SccFields[loop.index]};
 %elif root_type_field.tag == 'numeric' and root_type.dimFields[loop.index]!='1':
     result.${f}.resize(asnVal.${root_type.asn1SccFields[loop.index]}.nCount);
-    for(int i = 0; i < ${root_type.dimFields[loop.index]};i++)
+    for(int i = 0; i < asnVal.${root_type.asn1SccFields[loop.index]}.nCount;i++)
     {
         result.${f}[i] = asnVal.${root_type.asn1SccFields[loop.index]}.arr[i];
     }
@@ -84,7 +84,7 @@ void ${config.asn1SccName}_fromAsn1(${config.cppName}& result, const T & asnVal,
 %endif
 %elif  root_type_field.tag != 'numeric' and root_type.dimFields[loop.index]!= '1':
     result.${f}.resize(asnVal.${root_type.asn1SccFields[loop.index]}.nCount);
-    for(int i = 0; i < ${root_type.dimFields[loop.index]};i++)
+    for(int i = 0; i < asnVal.${root_type.asn1SccFields[loop.index]}.nCount;i++)
     {
 %if root_type.isOpaque[loop.index]:
 <%opaque_info = opaqueTypes[root_type_field.asnName]%>\
@@ -134,7 +134,14 @@ void ${config.asn1SccName}_toAsn1(T & result, const ${config.cppName}& baseObj,\
 
 %elif root_type.tag == 'container':
 <% root_type_field = all_info[root_type.rootTypes[0]]%>\
-    for (int i = 0; i < length_${config.asn1SccParameters[0]}; i++)
+    if( baseObj.size() > length_${config.asn1SccParameters[0]})
+    {
+        fprintf(stderr, "WARNING:  truncated ${config.asn1SccName} to %lld elements.\n",length_${config.asn1SccParameters[0]});
+        result.nCount = length_${config.asn1SccParameters[0]};
+    }
+    else
+        result.nCount = baseObj.size();
+    for (int i = 0; i < result.nCount; i++)
     {
 %if root_type_field == 'numeric':
         result.arr[i] = baseObj[i];
@@ -147,16 +154,26 @@ void ${config.asn1SccName}_toAsn1(T & result, const ${config.cppName}& baseObj,\
 %else:
 		${root_type_field.asn1SccName}_toAsn1(result.arr[i], baseObj[i]);
 %endif
-
     }
-    result.nCount = length_${config.asn1SccParameters[0]};
 %elif root_type.tag == 'compound':
 %for f in root_type.cppFields:
 <% root_type_field = all_info[root_type.rootTypes[loop.index]]%>\
+%if root_type.dimFields[loop.index]!='1':
+    if( baseObj.${f}.size() > ${root_type.dimFields[loop.index]})
+    {
+        fprintf(stderr, "WARNING:  truncated ${root_type.asn1SccFields[loop.index]} of ${config.asn1SccName} to %lld elements.\n",${root_type.dimFields[loop.index]});
+        result.${root_type.asn1SccFields[loop.index]}.nCount = ${root_type.dimFields[loop.index]};
+    }
+    else
+    {
+        result.${root_type.asn1SccFields[loop.index]}.nCount = baseObj.${f}.size();
+    }
+%endif
+
 %if root_type_field.tag == 'numeric' and root_type.dimFields[loop.index] == '1':
     result.${root_type.asn1SccFields[loop.index]} = baseObj.${f};
 %elif root_type_field.tag == 'numeric' and root_type.dimFields[loop.index]!='1':
-    for(int i = 0; i < ${root_type.dimFields[loop.index]};i++)
+    for(int i = 0; i < result.${root_type.asn1SccFields[loop.index]}.nCount ;i++)
     {
         result.${root_type.asn1SccFields[loop.index]}.arr[i]= baseObj.${f}[i];
     }
@@ -170,7 +187,7 @@ void ${config.asn1SccName}_toAsn1(T & result, const ${config.cppName}& baseObj,\
     ${root_type_field.asn1SccName}_toAsn1(result.${root_type.asn1SccFields[loop.index]}, baseObj.${f});
 %endif
 %elif  root_type_field.tag != 'numeric' and root_type.dimFields[loop.index]!= '1':
-    for(int i = 0; i < ${root_type.dimFields[loop.index]};i++)
+    for(int i = 0; i < result.${root_type.asn1SccFields[loop.index]}.nCount;i++)
     {
 %if root_type.isOpaque[loop.index]:
 <%opaque_info = opaqueTypes[root_type_field.asnName]%>\
