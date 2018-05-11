@@ -30,7 +30,7 @@ target_include_directories(${"${LIB}"}
    PUBLIC ${"${CMAKE_INSTALL_PREFIX}"}/include
    PRIVATE ${"${CMAKE_CURRENT_BINARY_DIR}"}
 )
-add_dependencies(${"${LIB}"} ${"${LIB}"}_local_types)
+add_dependencies(${"${LIB}"} ${"${LIB}"}_local_types_generate_c)
 
 # Install headers, libraries and pkg-config file
 install(FILES ${"${HEADERS}"}

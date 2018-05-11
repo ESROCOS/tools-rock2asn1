@@ -9,5 +9,6 @@ cmake_minimum_required(VERSION 3.3)
 project(${lib_name}_support)
 
 include($ENV{ESROCOS_CMAKE})
+esrocos_init()
 
 add_subdirectory(src)
