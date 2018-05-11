@@ -192,7 +192,7 @@ void ${config.asn1SccName}_toAsn1(T & result, const ${config.cppName}& baseObj,\
 %if root_type.isOpaque[loop.index]:
 <%opaque_info = opaqueTypes[root_type_field.asnName]%>\
 		${opaque_info.cppMarshall} ${f}_intermediate;
-		${opaque_info.briefName[root_type.idxOpaque[loop.index]]}_fromIntermediate(${f}_intermediate, baseObj.${f}[i]);
+		${opaque_info.briefName[root_type.idxOpaque[loop.index]]}_toIntermediate(${f}_intermediate, baseObj.${f}[i]);
 		${root_type_field.asn1SccName}_toAsn1(result.${root_type.asn1SccFields[loop.index]}.arr[i], ${f}_intermediate);
 %else:
         ${root_type_field.asn1SccName}_toAsn1(result.${root_type.asn1SccFields[loop.index]}.arr[i], baseObj.${f}[i]);
