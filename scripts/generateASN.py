@@ -11,7 +11,10 @@ from enum import Enum
 import xml.etree.ElementTree as ET
 from mako.template import Template
 from mako.runtime import Context
-from StringIO import StringIO
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 from shutil import copyfile
 
 # Global variables
@@ -29,6 +32,18 @@ basicTypes = {'Bool': 'T-Boolean', 'Char': 'T-UInt8', 'Int': 'T-Int16', 'Float':
                'Int8-t': 'T-Int8', 'Uint8-t': 'T-UInt8', 'Int16-t': 'T-Int16', 'Uint16-t': 'T-UInt16',
                'Int32-t': 'T-Int32', 'Uint32-t': 'T-UInt32', 'Int64-t': 'T-Int64', 'Uint64-t': 'T-UInt64',
                'Float32-t': 'T-Float', 'Float64-t': 'T-Double', 'Std-string': 'T-String', 'String': 'T-String'}
+
+invalidKeywords = [
+    "active", "adding", "all", "alternative", "and", "any", "as", "atleast", "axioms", "block", "call", "channel", "comment", "connect", "connection", "constant", "constants", "create", "dcl", "decision", "default", "else", "endalternative", "endblock", "endchannel", "endconnection", "enddecision", "endgenerator", "endmacro", "endnewtype", "endoperator", "endpackage", "endprocedure", "endprocess", "endrefinement", "endselect", "endservice", "endstate", "endsubstructure", "endsyntype", "endsystem", "env", "error", "export", "exported", "external", "fi", "finalized", "for", "fpar", "from", "gate", "generator", "if", "import", "imported", "in", "inherits", "input", "interface", "join", "literal", "literals", "macro", "macrodefinition", "macroid", "map", "mod", "nameclass", "newtype", "nextstate", "nodelay", "noequality", "none", "not", "now", "offspring", "operator", "operators", "or", "ordering", "out", "output", "package", "parent", "priority", "procedure", "process", "provided", "redefined", "referenced", "refinement", "rem", "remote", "reset", "return", "returns", "revealed", "reverse", "save", "select", "self", "sender", "service", "set", "signal", "signallist", "signalroute", "signalset", "spelling", "start", "state", "stop", "struct", "substructure", "synonym", "syntype", "system", "task", "then", "this", "timer", "to", "type", "use", "via", "view", "viewed", "virtual", "with", "xor", "end", "i", "j", "auto", "const",
+    # From Nicolas Gillet/Astrium for SCADE
+    "abstract", "activate", "and", "assume", "automaton", "bool", "case", "char", "clock", "const", "default", "div", "do", "else", "elsif", "emit", "end", "enum", "every", "false", "fby", "final", "flatten", "fold", "foldi", "foldw", "foldwi", "function", "guarantee", "group", "if", "imported", "initial", "int", "is", "last", "let", "make", "map", "mapfold", "mapi", "mapw", "mapwi", "match", "merge", "mod", "node", "not", "numeric", "of", "onreset", "open", "or", "package", "parameter", "pre", "private", "probe", "public", "real", "restart", "resume", "returns", "reverse", "sensor", "sig", "specialize", "state", "synchro", "tel", "then", "times", "transpose", "true", "type", "unless", "until", "var", "when", "where", "with", "xor",
+    # From Maxime - ESA GNC Team
+    "open", "close", "flag",
+    #From Raquel - ESROCOS
+    "name", "size"
+
+]
+
 
 allInfo = dict()
 
@@ -131,7 +146,7 @@ def parse_args():
             args,
             'hi:o:s:',
             ['help', "ifile=","outdir-asn=","outdir-support"])
-        print optlist
+        print(optlist)
     except:
         usage()
         sys.exit(ErrorCodes.ARGS_ERROR.value)
@@ -155,7 +170,7 @@ def usage():
     '''
     Print command-line usage
     '''
-    print 'Usage: generateASN -i <inputfile> -o <outdir-asn> -s <outdir-support>  '
+    print('Usage: generateASN -i <inputfile> -o <outdir-asn> -s <outdir-support>  ')
 
 
 def remove_templates(str_type):
@@ -201,9 +216,9 @@ def process_type_field(type_field, name_var=''):
     idx_opaque = -1
 
     while is_template:
-        if basicTypes.has_key(type_field):
+        if type_field in basicTypes:
             is_template = False
-        elif aliasTypes.has_key(type_field):
+        elif type_field in aliasTypes:
             type_field_old = type_field
             type_field = aliasTypes[type_field]
             if type_field in opaqueTypes:
@@ -232,7 +247,7 @@ def process_type_field(type_field, name_var=''):
         #asn1_type += 'SEQUENCE (SIZE(1..200)) OF '
         type_field = str_type
     else:
-        print 'Strange'
+        print('Strange')
         str_type = str_type.strip()
         nums = str_type.split(',')
 
@@ -247,9 +262,9 @@ def process_type_field(type_field, name_var=''):
     idx_opaque = -1
 
     while is_template:
-        if basicTypes.has_key(type_field.strip('/')):
+        if type_field.strip('/') in basicTypes:
             is_template = False
-        elif aliasTypes.has_key(type_field):
+        elif type_field in aliasTypes:
             type_field_old = type_field
             type_field = aliasTypes[type_field]
             if type_field in opaqueTypes:
@@ -270,9 +285,7 @@ def process_type_field(type_field, name_var=''):
     else:
         dim = '1'
 
-
-
-    if basicTypes.has_key(type_field):
+    if type_field in basicTypes:
         asn1_type += basicTypes[type_field]
         if not basicTypes[type_field] in deps_types:
             deps_types.append(basicTypes[type_field])
@@ -289,6 +302,11 @@ def process_name_var(name):
     name = name.lower()
     name = name.replace('_', '-')
     name = name.replace('--', '-')
+    if name.endswith('-'):
+        name = name[0:-1]
+
+    if name in invalidKeywords:
+        name = name + '-t'
     return name
 
 
@@ -321,6 +339,9 @@ def process_name_type(name):
 
     if name.endswith('-'):
         name = name[0:-1]
+
+    if name in invalidKeywords:
+        name = name + '-t'
 
     return name
 
@@ -365,11 +386,11 @@ def process_opaque(root):
         opaqueTypes[marshall].cppInclude += process_orogen_include(fields)
 
 
-        if not aliasTypes.has_key(name):
+        if not name in aliasTypes:
             aliasTypes[name] = marshall
 
         else:
-            print 'Problem'
+            print('Problem')
 
 
 def process_alias(root):
@@ -384,7 +405,7 @@ def process_alias(root):
         source = fields.get ('source')
         name = process_name_type(name)
         source = process_name_type(source)
-        if not aliasTypes.has_key(source):
+        if not source in aliasTypes:
             aliasTypes[source] = name
 
 
@@ -413,7 +434,7 @@ def process_xml(root, tag):
 
         #Check if the type is a template, only add the containers that have alias
         while is_template:
-            if aliasTypes.has_key(name):
+            if name in aliasTypes:
                 name = aliasTypes[name]
                 if tag == 'container':
                     add_container = True
@@ -444,7 +465,7 @@ def process_xml(root, tag):
         if type_template != '':
             is_template = True
             while is_template:
-                if aliasTypes.has_key (type_template):
+                if type_template in aliasTypes:
                     type_template = aliasTypes[type_template]
                 else:
                     is_template = False
@@ -565,7 +586,7 @@ def process_xml(root, tag):
                     #allTypes[name_type_inst].cppInclude = new_type.cppInclude
 
                     # Add an entry for such library
-                    if not libraries.has_key(name_type_inst):
+                    if not name_type_inst in libraries:
                         libraries[name_type_inst] = name_source + "-Types"
 
 
@@ -595,7 +616,7 @@ def process_xml(root, tag):
             #Aqu/'i no hay parameters
 
             if suffix:
-                print 'Strange'
+                print('Strange')
 
             str_type += asn1_type
             deps_types.append(parameter)
@@ -621,7 +642,7 @@ def process_xml(root, tag):
                 add_inst = True
 
                 # Add an entry for such library
-                if not libraries.has_key(name_type_inst):
+                if not name_type_inst in libraries:
                     libraries[name_type_inst] = name_source + "-Types"
 
         # Initialize parameters of allTypes[name_type]
@@ -629,11 +650,11 @@ def process_xml(root, tag):
             if not name_type in allTypes:
                 allTypes[name_type] = new_type
 
-            # if not aliasTypes.has_key (name_type):
+            # if not name_type in aliasTypes:
             #     aliasTypes[name_type] = name_type + "{"+parameter+"}"
 
         # Add an entry for such library
-        if not libraries.has_key(name_type):
+        if not name_type in libraries:
             libraries[name_type] = name_source + "-Types"
 
         if tag != 'container' or (tag == 'container' and add_container):
@@ -645,7 +666,7 @@ def process_xml(root, tag):
                 #allTypes[name_type].cppInclude = cpp_include
                 #allTypes[names].tag = tag
                 #allTypes.append(name_type)
-            if not allInfo.has_key(source_file):
+            if not source_file in allInfo:
                 allInfo[source_file] = AsnFile(name_source)
 
             allInfo[source_file].strTypes.append(str_type)
@@ -719,10 +740,10 @@ def find_libraries(deps_types, pkg_name):
     same_lib = pkg_name + '-Types'
     if deps_types:
         for t in deps_types:
-            if libraries.has_key(t):
+            if t in libraries:
                 lib = libraries[t]
                 if lib != same_lib:
-                    if not import_libraries.has_key(lib):
+                    if not lib in import_libraries:
                         import_libraries[lib] = []
                     import_libraries[lib].append(t)
     return import_libraries
@@ -741,7 +762,7 @@ def add_parameter_type(name_type):
     allInfo[source_file].strTypes.append(str_type)
     allInfo[source_file].nameTypes.append(parameter)
 
-    if not libraries.has_key (parameter):
+    if not parameter in libraries:
         libraries[parameter] = "UserDefs-Types"
 
     if deps not in allInfo[source_file].depsTypes:
@@ -801,8 +822,8 @@ def main():
         cpp_include =[]
         names = process_name_type(names)
         #names = names.strip('/')
-        if basicTypes.has_key(names):
-            print names, basicTypes[names]
+        if names in basicTypes:
+            print (names, basicTypes[names])
             if not basicTypes[names] in allTypes:
                 allTypes[names] = ConfigTypes(basicTypes[names])
                 allTypes[names].cppName = process_cpp_name(cpp_name)
@@ -815,7 +836,7 @@ def main():
                 allTypes[names].cppInclude = cpp_include
         else:
 
-            print 'Does not exist this basic type'
+            print('Does not exist this basic type')
 
     allInfo['userdefs.asn'] = AsnFile('UserDefs')
 
@@ -857,7 +878,7 @@ def main():
         allTypes['T-String'] = new_type
 
     else:
-        print 'Does not exist this basic type'
+        print('Does not exist this basic type')
 
 
 
