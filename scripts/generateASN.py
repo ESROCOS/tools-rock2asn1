@@ -49,10 +49,12 @@ allInfo = dict()
 
 libraries = dict()
 
-userDefs = None
+userDefsLib = ''
+userDefsSource = ''
 
 libName = ''
 sourceName = ''
+
 
 for key in ['T-Boolean', 'T-Int8', 'T-UInt8', 'T-Int32', 'T-UInt32']:
     libraries[key] = 'TASTE-BasicTypes'
@@ -750,7 +752,7 @@ def find_libraries(deps_types, pkg_name):
 
 def add_parameter_type(name_type):
 
-    source_file = 'userdefs.asn'
+    source_file = userDefsSource
     deps = 'T-UInt32'
 
     max_dim = 'max' + name_type
@@ -763,7 +765,7 @@ def add_parameter_type(name_type):
     allInfo[source_file].nameTypes.append(parameter)
 
     if not parameter in libraries:
-        libraries[parameter] = "UserDefs-Types"
+        libraries[parameter] = userDefsLib + "-Types"
 
     if deps not in allInfo[source_file].depsTypes:
         allInfo[source_file].depsTypes.append (deps)
@@ -771,7 +773,7 @@ def add_parameter_type(name_type):
 
 def add_var_type(name_type):
 
-    source_file = 'userdefs.asn'
+    source_file = userDefsSource
     deps = 'T-UInt32'
 
     num_name_type = 'max' + name_type
@@ -792,7 +794,7 @@ def process_cpp_name(cpp_name):
     return cpp_name
 
 def main():
-    global sourceName, libName
+    global sourceName, libName, userDefsSource, userDefsLib
     options = parse_args()
 
     file_tlb = options[0]
@@ -801,6 +803,8 @@ def main():
     source_name = source_name[-1]
     source_name = source_name.rstrip('.tlb')
     name_lib = source_name.capitalize()
+    userDefsSource = 'userdefs-' + source_name + '.asn'
+    userDefsLib = 'UserDefs-' + name_lib
     source_name = source_name + '.asn'
 
     sourceName = source_name
@@ -838,11 +842,11 @@ def main():
 
             print('Does not exist this basic type')
 
-    allInfo['userdefs.asn'] = AsnFile('UserDefs')
+    allInfo[userDefsSource] = AsnFile(userDefsLib)
 
-    allInfo['userdefs.asn'].nameTypes.append('Dummy-T')
-    allInfo['userdefs.asn'].strTypes.append('Dummy-T ::= T-UInt32')
-    libraries['Dummy-T'] = 'UserDefs-Types'
+    allInfo[userDefsSource].nameTypes.append('Dummy'+libName+'-T')
+    allInfo[userDefsSource].strTypes.append('Dummy'+libName+'-T ::= T-UInt32')
+    libraries['Dummy'+libName+'-T'] = userDefsLib + '-Types'
 
     #Soluci/'on temporal
     cpp_name = '/std/string'
@@ -860,7 +864,9 @@ def main():
         new_type.tag = 'inst'
         #Faltar/'ia include cpp includes
 
-        [max_dim, parameter] = add_parameter_type('T-String')
+        #[max_dim, parameter] = add_parameter_type('T-String')
+        max_dim = 'maxT-String'
+        parameter = 'numT-String'
 
         new_type.maxDim.append(max_dim)
 
@@ -884,10 +890,10 @@ def main():
 
 
     allInfo[sourceName] = AsnFile(libName)
-    allInfo[sourceName].nameTypes.append('Dummy2-T')
-    allInfo[sourceName].strTypes.append('Dummy2-T ::= Dummy-T')
-    allInfo[sourceName].depsTypes.append('Dummy-T')
-    libraries['Dummy2-T'] = libName+'-Types'
+    allInfo[sourceName].nameTypes.append('Dummy2'+libName+'-T')
+    allInfo[sourceName].strTypes.append('Dummy2'+libName+'-T ::= Dummy'+libName+'-T')
+    allInfo[sourceName].depsTypes.append('Dummy'+libName+'-T')
+    libraries['Dummy2'+libName+'-T'] = libName+'-Types'
 
     #allInfo['userdefs.asn'].nameTypes.append('numT-String')
     #allInfo['userdefs.asn'].strTypes.append('numT-String T-UInt32 ::= 200')
