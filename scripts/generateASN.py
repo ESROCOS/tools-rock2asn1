@@ -308,7 +308,7 @@ def process_name_var(name):
         name = name[0:-1]
 
     if name in invalidKeywords:
-        name = name + '-t'
+        name = name + '-val'
     return name
 
 
@@ -343,7 +343,7 @@ def process_name_type(name):
         name = name[0:-1]
 
     if name in invalidKeywords:
-        name = name + '-t'
+        name = name + '-val'
 
     return name
 

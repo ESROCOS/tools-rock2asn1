@@ -10,7 +10,10 @@ import getopt
 from enum import Enum
 from mako.template import Template
 from mako.runtime import Context
-from StringIO import StringIO
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 from shutil import copyfile
 
 
@@ -35,7 +38,7 @@ def parse_args():
             args,
             'hn:',
             ['help', "lib-name="])
-        print optlist
+        print(optlist)
     except:
         usage()
         sys.exit(ErrorCodes.ARGS_ERROR.value)
@@ -55,7 +58,7 @@ def usage():
     '''
     Print command-line usage
     '''
-    print 'Usage: generateASN -i <inputfile> -o1 <outdir-asn> -o2 <outdir-support>  '
+    print('Usage: generateASN -i <inputfile> -o1 <outdir-asn> -o2 <outdir-support>  ')
 
 def write_templates(template_names,lib_name,prefix,outdir):
     for t in template_names:
@@ -74,13 +77,13 @@ def main():
 
     lib_name = options[0]
 
-    print lib_name
+    print(lib_name)
 
     autoproj_current_root = os.environ.get('AUTOPROJ_CURRENT_ROOT')
 
     if not autoproj_current_root:
-        print "Error, environement variable AUTOPROJ_CURRENT_ROOT does not exist"
-        return SYSCMD_ERROR
+        print("Error, environement variable AUTOPROJ_CURRENT_ROOT does not exist")
+        return ErrorCodes.SYSCMD_ERROR.value
 
 
     out_asn = os.path.join(autoproj_current_root,'types/',lib_name)
@@ -108,8 +111,9 @@ def main():
 
     if not os.path.exists(out_support):
         os.makedirs(out_support)
-        prefix = "templates_support/"
-        write_templates(template_names, lib_name, prefix, out_support)
+        
+    prefix = "templates_support/"
+    write_templates(template_names, lib_name, prefix, out_support)
 
     out_src = os.path.join(out_support, 'src')
 
@@ -117,8 +121,8 @@ def main():
 
     if not os.path.exists(out_src):
         os.makedirs(out_src)
-        write_templates(template_names, lib_name, 'templates_support/src/', out_src)
-        copyfile('templates_support/src/lib_name_support.pc.in',os.path.join(out_src,lib_name+'_support.pc.in'))
+    write_templates(template_names, lib_name, 'templates_support/src/', out_src)
+    copyfile('templates_support/src/lib_name_support.pc.in',os.path.join(out_src,lib_name+'_support.pc.in'))
 
 if __name__ == '__main__':
     main()
