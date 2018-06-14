@@ -22,7 +22,6 @@
 #include "${f}"
 %endfor
 
-
 //Conversion functions from asn1 to c++ type
 %if config.tag == 'inst':
 <%root_type = all_info[config.rootTypes[0]]%>

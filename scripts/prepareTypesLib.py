@@ -62,14 +62,15 @@ def usage():
 
 def write_templates(template_names,lib_name,prefix,outdir):
     for t in template_names:
-        template = Template(filename=prefix+t)
-        buf = StringIO()
-        ctx = Context(buf, lib_name=lib_name)
-        template.render_context(ctx)
         name_file = os.path.join(outdir, t.rstrip('.mako'))
-        f = open(name_file, 'w')
-        f.write(buf.getvalue())
-        f.close()
+        if not os.path.isfile(name_file):
+            template = Template(filename=prefix+t)
+            buf = StringIO()
+            ctx = Context(buf, lib_name=lib_name)
+            template.render_context(ctx)
+            f = open(name_file, 'w')
+            f.write(buf.getvalue())
+            f.close()
 
 
 def main():
