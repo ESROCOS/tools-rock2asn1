@@ -23,6 +23,12 @@ T-String ::= T-StringP{numT-String}
 T-StringP{T-UInt32: maxT-String} ::= OCTET STRING (SIZE(0..maxT-String))
 
 numT-String T-UInt32::= 200
+
+T-Time ::= SEQUENCE
+{
+    sec  T-UInt32,
+    nsec T-UInt32
+}
   
 END
 

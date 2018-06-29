@@ -3,9 +3,11 @@ types/${lib_name}
 Robotics data types in ASN.1, automatically defined and generated 
 from Rock ${lib_name} types.
 
+Generated from ${context._with_template.uri} for ${lib_name}.
+
 License
 -------
-GPLv2
+TBD
 
 Installation
 ------------

@@ -1,3 +1,4 @@
+<!-- Generated from ${context._with_template.uri} for ${lib_name} -->
 <package>
     <description brief="Support functions for ASN.1 robotic data types">
         This package provides conversion functions, operations, etc. for

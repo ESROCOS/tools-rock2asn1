@@ -1,6 +1,4 @@
-# H2020 ESROCOS Project
-# Company: GMV Aerospace & Defence S.A.U.
-# Licence: GPLv2
+# Generated from ${context._with_template.uri} for ${lib_name}.
 
 set(LIB ${"${CMAKE_PROJECT_NAME}"})
 

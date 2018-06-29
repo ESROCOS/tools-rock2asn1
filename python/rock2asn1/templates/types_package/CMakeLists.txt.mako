@@ -1,6 +1,4 @@
-# H2020 ESROCOS Project
-# Company: GMV Aerospace & Defence S.A.U.
-# Licence: GPLv2
+# Generated from ${context._with_template.uri} for ${lib_name}.
 
 # CMakeLists.txt has to be located in the project folder and cmake has to be
 # executed from 'project/build' with 'cmake ../'.

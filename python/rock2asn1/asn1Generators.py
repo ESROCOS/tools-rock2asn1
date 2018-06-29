@@ -1,21 +1,23 @@
-#!/usr/bin/env python
-
-# Standard library imports
+# H2020 ESROCOS Project
+# Company: GMV Aerospace & Defence S.A.U.
+# Licence: GPLv2
 
 import sys
 import os
-import getopt
+import shutil
 
-# Related Library imports
-from enum import Enum
-import xml.etree.ElementTree as ET
 from mako.template import Template
 from mako.runtime import Context
+import xml.etree.ElementTree as ET
+
 try:
     from StringIO import StringIO
 except ImportError:
     from io import StringIO
-from shutil import copyfile
+
+from . import ErrorCodes
+
+
 
 # Global variables
 
@@ -48,6 +50,10 @@ invalidKeywords = [
 allInfo = dict()
 
 libraries = dict()
+for key in ['T-Boolean', 'T-Int8', 'T-UInt8', 'T-Int32', 'T-UInt32']:
+    libraries[key] = 'TASTE-BasicTypes'
+for key in ['T-Int16', 'T-UInt16', 'T-Int64', 'T-UInt64', 'T-Float', 'T-Double', 'T-String']:
+    libraries[key] = 'TASTE-ExtendedTypes'
 
 userDefsLib = ''
 userDefsSource = ''
@@ -55,19 +61,11 @@ userDefsSource = ''
 libName = ''
 sourceName = ''
 
-
-for key in ['T-Boolean', 'T-Int8', 'T-UInt8', 'T-Int32', 'T-UInt32']:
-    libraries[key] = 'TASTE-BasicTypes'
-for key in ['T-Int16', 'T-UInt16', 'T-Int64', 'T-UInt64', 'T-Float', 'T-Double', 'T-String']:
-    libraries[key] = 'TASTE-ExtendedTypes'
-
 aliasTypes = dict()
+opaqueTypes = dict()
+allTypes = dict() # dictionary of all ASN types created
 
 
-class ErrorCodes(Enum):
-    ARGS_ERROR = 1
-    SYSCMD_ERROR = 2
-    OK = 0
 
 
 class AsnFile():
@@ -126,53 +124,7 @@ class OpaqueType():
         self.briefName.append(brief_name)
 
 
-opaqueTypes = dict()
 
-
-
-
-allTypes = dict() # dictionary of all ASN types created
-
-
-def parse_args():
-    '''
-    Parse command-line arguments
-    :returns [str]: list of options read
-    '''
-    inputfile = ''
-    outdir_asn = ''
-    outdir_support = ''
-    try:
-        args = sys.argv[1:]
-        optlist, args = getopt.gnu_getopt(
-            args,
-            'hi:o:s:',
-            ['help', "ifile=","outdir-asn=","outdir-support"])
-        print(optlist)
-    except:
-        usage()
-        sys.exit(ErrorCodes.ARGS_ERROR.value)
-
-    for opt, arg in optlist:
-        if opt == '-h':
-            usage()
-            sys.exit(ErrorCodes.OK.value)
-        elif opt in ('-i', '--ifile'):
-            inputfile = arg
-        elif opt in ('-o', '--outdir-asn'):
-            outdir_asn = arg
-        elif opt in ('-s', '--outdir-support'):
-            outdir_support = arg
-
-    options = [inputfile, outdir_asn, outdir_support]
-
-    return options
-
-def usage():
-    '''
-    Print command-line usage
-    '''
-    print('Usage: generateASN -i <inputfile> -o <outdir-asn> -s <outdir-support>  ')
 
 
 def remove_templates(str_type):
@@ -793,11 +745,10 @@ def process_cpp_name(cpp_name):
     cpp_name = cpp_name.replace('<::','<')
     return cpp_name
 
-def main():
+def generateTypesAndFunctions(file_tlb, out_asn, out_support):
     global sourceName, libName, userDefsSource, userDefsLib
-    options = parse_args()
 
-    file_tlb = options[0]
+    templates_dir = os.path.join(os.path.dirname(__file__), 'templates')
 
     source_name = file_tlb.split('/')
     source_name = source_name[-1]
@@ -810,12 +761,8 @@ def main():
     sourceName = source_name
     libName = name_lib
 
-    out_asn = options[1]
-    out_support = options[2]
-
     tree = ET.parse(file_tlb)
     root = tree.getroot()
-
 
 
     # Find all numeric types
@@ -909,7 +856,7 @@ def main():
 
     process_xml(root, 'compound')
 
-    asn_template = Template(filename="template.asn.mako")
+    asn_template = Template(filename=os.path.join(templates_dir, 'template.asn.mako'))
 
     if not os.path.exists(out_asn):
         os.makedirs(out_asn)
@@ -953,14 +900,15 @@ def main():
         f = open(name_file, 'w')
         f.write(buf.getvalue())
         f.close()
-    copyfile('taste-types.asn', os.path.join(out_asn, 'taste-types.asn'))
-    copyfile('taste-extended.asn', os.path.join(out_asn, 'taste-extended.asn'))
 
-    hpp_template = Template(filename="template_convert.hpp.mako")
-    cpp_template = Template(filename="template_convert.cpp.mako")
-    h_template = Template(filename="template_types.h.mako")
-    hpp_convert_template = Template(filename="opaque_convert.hpp.mako")
-    cpp_convert_template = Template(filename="opaque_convert.cpp.mako")
+    shutil.copyfile(os.path.join(templates_dir, 'taste-types.asn'), os.path.join(out_asn, 'taste-types.asn'))
+    shutil.copyfile(os.path.join(templates_dir, 'taste-extended.asn'), os.path.join(out_asn, 'taste-extended.asn'))
+
+    hpp_template = Template(filename=os.path.join(templates_dir, 'template_convert.hpp.mako'))
+    cpp_template = Template(filename=os.path.join(templates_dir, 'template_convert.cpp.mako'))
+    h_template = Template(filename=os.path.join(templates_dir, 'template_types.h.mako'))
+    hpp_convert_template = Template(filename=os.path.join(templates_dir, 'opaque_convert.hpp.mako'))
+    cpp_convert_template = Template(filename=os.path.join(templates_dir, 'opaque_convert.cpp.mako'))
 
     buf = StringIO()
     ctx = Context(buf, root='BASE', generated_files=generated_files)
@@ -1047,7 +995,3 @@ def main():
         f = open(name_file, 'w')
         f.write(buf.getvalue())
         f.close()
-
-
-if __name__ == '__main__':
-    main()
