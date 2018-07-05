@@ -1,10 +1,4 @@
 /*
- * H2020 ESROCOS Project
- * Company: GMV Aerospace & Defence S.A.U.
- * Licence: GPLv2
- */
-
-/*
  * A header file to import all the asn1 types either from the
  * types library or from dataview-uniq.h (if building from TASTE).
  */
