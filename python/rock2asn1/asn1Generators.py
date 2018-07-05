@@ -21,11 +21,6 @@ from . import ErrorCodes
 
 # Global variables
 
-#basicTypes = {'bool': 'T-Boolean', 'char': 'T-UInt8', 'int': 'T-Int16', 'float': 'T-Float', 'double': 'T-Double',
-#               'int8_t': 'T-Int8', 'uint8_t': 'T-UInt8', 'int16_t': 'T-Int16', 'uint16_t': 'T-UInt16',
-#               'int32_t': 'T-Int32', 'uint32_t': 'T-UInt32', 'int64_t': 'T-Int64', 'uint64_t': 'T-UInt64',
-#               'float32_t': 'T-Float', 'float64_t': 'T-Double', 'std::string': 'T-String', 'string': 'T-String'}
-
 # list obtained by the command gcc -xc++ -E -v - for C++ compiler, gcc -xc -E -v - for C language
 
 includePath = ['/home/esrocos/esrocos_workspace/install/include/', '/usr/include/c++/5/', '/usr/include/x86_64-linux-gnu/c++/5/', '/usr/include/c++/5/backward', '/usr/lib/gcc/x86_64-linux-gnu/5/include/', '/usr/local/include', '/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed/', '/usr/include/x86_64-linux-gnu/', '/usr/include/']
@@ -63,9 +58,7 @@ sourceName = ''
 
 aliasTypes = dict()
 opaqueTypes = dict()
-allTypes = dict() # dictionary of all ASN types created
-
-
+allTypes = dict()  # dictionary of all ASN types created
 
 
 class AsnFile():
@@ -186,20 +179,19 @@ def process_type_field(type_field, name_var=''):
     if str_type == '':
         type_field = template
     elif template == 'Std-vector':
-
+        type_field = str_type
         [max_dim, parameter] = add_parameter_type (name_var)
-        asn1_type += "SEQUENCE (SIZE(1.." + max_dim + ")) OF "
+        if type_field != 'Uint8-t':
+            asn1_type += "SEQUENCE (SIZE(1.." + max_dim + ")) OF "
+        else:
+            asn1_type +='OCTET STRING(SIZE(1..' + max_dim + '))'
 
         deps_types.append (parameter)
         deps_types.append ('T-UInt32')
 
         suffix.append(max_dim)
         parameters.append (parameter)
-
-
-
-        #asn1_type += 'SEQUENCE (SIZE(1..200)) OF '
-        type_field = str_type
+                
     else:
         print('Strange')
         str_type = str_type.strip()
@@ -233,21 +225,27 @@ def process_type_field(type_field, name_var=''):
     #Raquel (it should be checked this
     if dim != '':
         type_field = str_type
-        asn1_type += 'SEQUENCE(SIZE(1..' + dim + ')) OF '
+        if process_type_field(type_field) != 'Uint8-t':
+            asn1_type += 'SEQUENCE(SIZE(1..' + dim + ')) OF '
+        else:
+            asn1_type += 'OCTET STRING(SIZE(1..' + dim + '))'
     elif parameter != '':
         dim = parameter
     else:
         dim = '1'
 
-    if type_field in basicTypes:
+
+    if type_field in basicTypes and type_field != 'Uint8-t':
         asn1_type += basicTypes[type_field]
         if not basicTypes[type_field] in deps_types:
             deps_types.append(basicTypes[type_field])
-    else:
+    elif type_field != 'Uint8-t':
         type_field = process_name_type(type_field)
         asn1_type += type_field
         if type_field not in deps_types:
             deps_types.append(type_field)
+
+
 
     return [asn1_type, deps_types, suffix, parameters, type_field, dim.replace('-','_'), is_opaque, idx_opaque]
 
@@ -271,10 +269,6 @@ def process_name_type(name):
 
     name = name.replace('<-','<')
 
-    # idx = name.rfind('<')
-    # if isinstance(idx, int):
-    #     name = name [0:idx+1] + name[idx+1].upper()+ name[idx+2:]
-
     sep = name.split('<')
     if len(sep)==1:
         name = name[0].upper() + name[1:]
@@ -286,8 +280,6 @@ def process_name_type(name):
             if (i+1)!=len(sep):
                 name += '<'
 
-
-    #name = name[0].upper() + name[1:]
     name = name.replace('_', '-')
     name = name.replace('--','-')
 
@@ -443,10 +435,10 @@ def process_xml(root, tag):
                 # allTypes[name_type].tag = tag
 
         asn_parameters = []
-        sub_fields = []
-        sub_types = []
+        #sub_fields = []
+        #sub_types = []
         #cpp_name = name
-        cpp_include = []
+        #cpp_include = []
         suffix = []
 
         #Initialize the dependecies of other types and suffix(parameters)
@@ -454,7 +446,7 @@ def process_xml(root, tag):
 
         #if is a enum
         if tag == 'enum':
-            str_type = name_type + " ::= ENUMERATED \n{\n"
+            #str_type = name_type + " ::= ENUMERATED \n{\n"
 
             for grandson in fields:
                 if grandson.tag == 'value':
@@ -463,12 +455,12 @@ def process_xml(root, tag):
                     new_type.cppFields.append(symbol)
                     symbol = process_name_var(symbol)
                     #str_type += '\t' + symbol + '\t(' + subfields['value'] + '),\n'
-                    str_type += '\t' + symbol + ',\n'
+                    #str_type += '\t' + symbol + ',\n'
                     new_type.asnFields.append(symbol)
                     new_type.asn1SccFields.append(symbol.replace('-','_'))
 
-            str_type = str_type[0:-2]  # Remove the las two characters because the last field does not finish in ','
-            str_type += '\n}'
+            #str_type = str_type[0:-2]  # Remove the las two characters because the last field does not finish in ','
+            #str_type += '\n}'
 
         elif tag == 'compound':
             str_type = ''#name_type + " ::= SEQUENCE \n{\n"
@@ -483,7 +475,7 @@ def process_xml(root, tag):
 
                     new_type.cppFields.append(subfields['name'])
 
-                    name_var = process_name_var(subfields['name'])#+'-'+name_type)
+                    name_var = process_name_var(subfields['name'])
 
                     new_type.asnFields.append(name_var)
                     new_type.asn1SccFields.append(name_var.replace('-','_'))
@@ -504,7 +496,7 @@ def process_xml(root, tag):
 
                     asn_parameters += parameters_aux
 
-                    str_type += '\t' + name_var + '\t ' + asn1_type + ',\n'
+                    #str_type += '\t' + name_var + '\t ' + asn1_type + ',\n'
                     deps_types += deps_types_aux
                     suffix += suffix_aux
 
@@ -553,7 +545,7 @@ def process_xml(root, tag):
             if parameter:
                 new_type.asnParameters.append (parameter)
                 new_type.asn1SccParameters.append(parameter.replace('-','_'))
-            str_type = name_type + "{T-UInt32: "+max_dim+"} ::= SEQUENCE (SIZE(1.."+max_dim+")) OF "
+            #str_type = name_type + "{T-UInt32: "+max_dim+"} ::= SEQUENCE (SIZE(1.."+max_dim+")) OF "
 
             container_type = fields.get ('of')
             new_type.cppTypes.append(container_type)
@@ -569,10 +561,7 @@ def process_xml(root, tag):
             new_type.idxOpaque.append(idx_opaque)
             #Aqu/'i no hay parameters
 
-            if suffix:
-                print('Strange')
-
-            str_type += asn1_type
+            #str_type += asn1_type
             deps_types.append(parameter)
             deps_types.append('T-UInt32')
 
@@ -613,19 +602,11 @@ def process_xml(root, tag):
 
         if tag != 'container' or (tag == 'container' and add_container):
 
-            #if not name_type in allTypes:
-                #allTypes[name_type] = ConfigTypes(name_type)
-                #allTypes[name_type].asnParameters = asn_parameters
-                #allTypes[name_type].cppName = cpp_name
-                #allTypes[name_type].cppInclude = cpp_include
-                #allTypes[names].tag = tag
-                #allTypes.append(name_type)
             if not source_file in allInfo:
                 allInfo[source_file] = AsnFile(name_source)
 
-            allInfo[source_file].strTypes.append(str_type)
+            #allInfo[source_file].strTypes.append(str_type)
             allInfo[source_file].nameTypes.append(name_type)
-
 
             for deps in deps_types:
                 if deps not in allInfo[source_file].depsTypes:
@@ -663,7 +644,6 @@ def process_cpp_include(fields):
                 if idx == 0:
                     include_orocos = False
                     cpp_include = cpp_include[len(f):-1]+cpp_include[-1]
-                    #cpp_include = cpp_include.lstrip(f)
                     break
                     # If there is no in cmake_prefix_path, include orocos/....
             if include_orocos:
@@ -787,7 +767,7 @@ def generateTypesAndFunctions(file_tlb, out_asn, out_support):
                 allTypes[names].cppInclude = cpp_include
         else:
 
-            print('Does not exist this basic type')
+            print('Does not exist the basic type '+names)
 
     allInfo[userDefsSource] = AsnFile(userDefsLib)
 
@@ -835,16 +815,13 @@ def generateTypesAndFunctions(file_tlb, out_asn, out_support):
 
 
 
-
+    #Adding Dummy2-xxx-T to make sure thar userdefs-xxx.h was included in xxx.asn
     allInfo[sourceName] = AsnFile(libName)
     allInfo[sourceName].nameTypes.append('Dummy2'+libName+'-T')
     allInfo[sourceName].strTypes.append('Dummy2'+libName+'-T ::= Dummy'+libName+'-T')
     allInfo[sourceName].depsTypes.append('Dummy'+libName+'-T')
     libraries['Dummy2'+libName+'-T'] = libName+'-Types'
 
-    #allInfo['userdefs.asn'].nameTypes.append('numT-String')
-    #allInfo['userdefs.asn'].strTypes.append('numT-String T-UInt32 ::= 200')
-    #libraries['numT-String'] = 'UserDefs-Types'
 
     process_opaque(root)
 
@@ -863,7 +840,7 @@ def generateTypesAndFunctions(file_tlb, out_asn, out_support):
 
 
 
-    #Added by Raquel
+    #Adding correct dependencies
     for k in allInfo:
         pkg = allInfo[k]
         for t in pkg.nameTypes:
@@ -876,14 +853,6 @@ def generateTypesAndFunctions(file_tlb, out_asn, out_support):
                             if d not in allInfo[k].depsTypes:
                                 allInfo[k].depsTypes.append(d)
 
-    # #Instanciar new Types
-    # for k in allInfo:
-    #     pkg = allInfo[k]:
-    #     for t in pkg.nameTypes:
-    #         if t in allTypes:
-    #             if t.asnParameters:
-    #                 #Add type
-    #                 newType =
 
     generated_files = ['taste-extended', 'taste-types']
 
