@@ -452,12 +452,13 @@ def process_xml(root, tag):
                 if grandson.tag == 'value':
                     subfields = grandson.attrib
                     symbol = subfields['symbol']
-                    new_type.cppFields.append(symbol)
-                    symbol = process_name_var(symbol)
+                    value = subfields['value']
+                    new_type.cppFields.append(value)
+                    symbol = process_name_var(name_type+'-'+symbol)
                     #str_type += '\t' + symbol + '\t(' + subfields['value'] + '),\n'
                     #str_type += '\t' + symbol + ',\n'
                     new_type.asnFields.append(symbol)
-                    new_type.asn1SccFields.append(symbol.replace('-','_'))
+                    new_type.asn1SccFields.append('asn1Scc'+symbol.replace('-','_'))
 
             #str_type = str_type[0:-2]  # Remove the las two characters because the last field does not finish in ','
             #str_type += '\n}'

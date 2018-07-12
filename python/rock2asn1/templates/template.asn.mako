@@ -32,7 +32,7 @@ ${configTypes[t].asnName} ::= ENUMERATED
 %endfor
 }
 %elif configTypes[t].tag == 'container' :
-${configTypes[t].asnName} {T-UInt16: ${configTypes[t].maxDim[0]}} ::= SEQUENCE(SIZE(1..${configTypes[t].maxDim[0]})) OF ${configTypes[t].asnTypes[0]}
+${configTypes[t].asnName} {T-UInt32: ${configTypes[t].maxDim[0]}} ::= SEQUENCE(SIZE(1..${configTypes[t].maxDim[0]})) OF ${configTypes[t].asnTypes[0]}
 %elif configTypes[t].tag == 'compound':
 ${configTypes[t].asnName}\
 %if configTypes[t].maxDim:

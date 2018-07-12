@@ -13,7 +13,15 @@
 void ${config.asn1SccName}_fromAsn1(${config.cppName}& result, const ${config.asn1SccName}& asnVal)
 {
 %if config.tag == 'enum':
-    result = (${config.cppName}) asnVal;
+    switch(asnVal)
+    {
+%for f in config.asn1SccFields:
+        case ${f}:
+            result = (${config.cppName})${config.cppFields[loop.index]}; 
+            break;
+%endfor
+    }
+##    result = (${config.cppName}) asnVal;
 
 %elif config.tag == 'container':
     for (int i = 0; i < ${config.asn1SccParameters[0]}; i++)
@@ -56,7 +64,22 @@ void ${config.asn1SccName}_fromAsn1(${config.cppName}& result, const ${config.as
 void ${config.asn1SccName}_toAsn1(${config.asn1SccName}& result, const ${config.cppName}& baseObj)
 {
 %if config.tag == 'enum':
-    result = (${config.asn1SccName}) baseObj;
+    
+%for f in config.cppFields:
+%if loop.first:
+    if(baseObj==${f})
+    {
+        result = (${config.asn1SccName})${config.asn1SccFields[loop.index]}; 
+    }
+%else:
+    else if(baseObj==${f})
+    {   
+        result = (${config.asn1SccName})${config.asn1SccFields[loop.index]}; 
+    }
+%endif    
+%endfor
+    
+##    result = (${config.asn1SccName}) baseObj;
 
 %elif config.tag == 'container':
     for (int i = 0; i < ${config.asn1SccParameters[0]}; i++)
