@@ -42,14 +42,18 @@ if [ ! -f libtest_support.so ]; then
 fi
 
 echo "Compile main function"
-cp ../../src_support/main.cpp .
+cp ../../src_support/*.cpp .
+cp ../../src_support/*.hpp .
 
-g++ -fPIC `pkg-config --cflags base-transport-typelib-gnulinux --cflags eigen3 --cflags base-types` -c main.cpp 
-g++ -L. -L${AUTOPROJ_CURRENT_ROOT}/install/lib -lbase-types -ltest_support -o main main.o
+#g++ -I. -fPIC `pkg-config --cflags base-transport-typelib-gnulinux --cflags eigen3 --cflags base-types` -c main.cpp test_frame.cpp
+#g++ -L. -L${AUTOPROJ_CURRENT_ROOT}/install/lib -lbase-types -ltest_support -o main main.o test_frame.o
 
-if [ -f main ]; then
+g++ -I. -fPIC `pkg-config --cflags base-transport-typelib-gnulinux --cflags eigen3 --cflags base-types` -c test.cpp
+g++ -L. -L${AUTOPROJ_CURRENT_ROOT}/install/lib -lbase-types -ltest_support -lboost_system -lboost_thread -lboost_unit_test_framework -o test test.o
+
+if [ -f test ]; then
     echo "Executing test function"
-    ./main
+    ./test
 else
     echo "Test build  failed!"
 fi
