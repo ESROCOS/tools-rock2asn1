@@ -37,7 +37,7 @@ invalidKeywords = [
     # From Maxime - ESA GNC Team
     "open", "close", "flag",
     #From Raquel - ESROCOS
-    "name", "size"
+    "name", "size", "data", "range", "subtype"
 
 ]
 
