@@ -33,10 +33,10 @@ echo ""
 
 echo "Compile conversion functions (this may take a while)"
 cd out_support/src
-ln -s ../../out_c asn1
+ln -s $AUTOPROJ_CURRENT_ROOT/tools/rock2asn1/test/out_c asn1
 g++ -fPIC `pkg-config --cflags base-transport-typelib-gnulinux --cflags eigen3 --cflags base-types` -c *.cpp 
-g++ -shared -o test_support.so *.o
-if [ ! -f test_support.so ]; then
+g++ -shared -o libtest_support.so *.o
+if [ ! -f libtest_support.so ]; then
     echo "Build failed!"
 fi
 cd ../..

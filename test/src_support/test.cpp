@@ -1,3 +1,5 @@
+#define BOOST_TEST_DYN_LINK
+#define BOOST_TEST_MAIN
 #include "Base-samples-frame-FrameConvert.hpp"
 #include "Base-JointStateConvert.hpp"
 #include <iostream>
@@ -19,7 +21,10 @@
 #endif //GENERATED_ASN1_DATAVIEW_UNIQ_H
 #endif //_INC_DATAVIEW_UNIQ_H
 
-#define BOOST_TEST_MAIN
+//#define BOOST_TEST_MAIN
+
+//#define BOOST_TEST_MODULE(test_frame)
+
 
 BOOST_AUTO_TEST_CASE(test_frame)
 {   
@@ -30,7 +35,7 @@ BOOST_AUTO_TEST_CASE(test_frame)
     
     
     cppOrigin.setFrameMode(mode);
-    std::cout << "Mode set cppOrigin" << mode << std::endl;
+    //std::cout << "Mode set cppOrigin " << mode << std::endl;
     base::samples::frame::Frame cppDest;
     asn1SccBase_samples_frame_Frame asnVal;
     
@@ -80,6 +85,8 @@ BOOST_AUTO_TEST_CASE(test_JointState)
     BOOST_CHECK(cppOrigin.getMode()== cppDest.getMode());
 
 }
+
+
 
 
 

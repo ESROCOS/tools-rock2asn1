@@ -37,7 +37,7 @@ invalidKeywords = [
     # From Maxime - ESA GNC Team
     "open", "close", "flag",
     #From Raquel - ESROCOS
-    "name", "size", "data", "range", "subtype"
+    "name", "size", "range", "subtype"
 
 ]
 
@@ -474,6 +474,7 @@ def process_xml(root, tag):
 
                     type_field = process_name_type(type_field)
 
+                    
                     new_type.cppFields.append(subfields['name'])
 
                     name_var = process_name_var(subfields['name'])
@@ -755,7 +756,7 @@ def generateTypesAndFunctions(file_tlb, out_asn, out_support):
         names = process_name_type(names)
         #names = names.strip('/')
         if names in basicTypes:
-            print (names, basicTypes[names])
+            #print (names, basicTypes[names])
             if not basicTypes[names] in allTypes:
                 allTypes[names] = ConfigTypes(basicTypes[names])
                 allTypes[names].cppName = process_cpp_name(cpp_name)
