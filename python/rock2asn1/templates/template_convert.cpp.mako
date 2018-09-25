@@ -82,6 +82,7 @@ void ${config.asn1SccName}_toAsn1(${config.asn1SccName}& result, const ${config.
 ##    result = (${config.asn1SccName}) baseObj;
 
 %elif config.tag == 'container':
+    result.nCount = ${config.asn1SccParameters[0]};
     for (int i = 0; i < ${config.asn1SccParameters[0]}; i++)
     {
         result.arr[i] = baseObj[i];
@@ -93,6 +94,7 @@ void ${config.asn1SccName}_toAsn1(${config.asn1SccName}& result, const ${config.
 %if root_type.tag == 'numeric' and config.dimFields[loop.index] == '1':
     result.${config.asn1SccFields[loop.index]} = baseObj.${f};
 %elif root_type.tag == 'numeric' and config.dimFields[loop.index]!='1':
+    result.${config.cppFields[loop.index]}.nCount = ${config.dimFields[loop.index]};
     for(int i = 0; i < ${config.dimFields[loop.index]};i++)
     {
         result.${config.cppFields[loop.index]}.arr[i] = baseObj.${f}[i];
@@ -107,6 +109,7 @@ void ${config.asn1SccName}_toAsn1(${config.asn1SccName}& result, const ${config.
     ${root_type.asn1SccName}_toAsn1(result.${config.asn1SccFields[loop.index]}, baseObj.${f});
 %endif
 %elif  root_type.tag != 'numeric' and config.dimFields[loop.index]!= '1':
+    ${root_type.asn1SccName}_toAsn1(result.${config.asn1SccFields[loop.index]}.nCount = ${config.dimFields[loop.index]};
     for(int i = 0; i < ${config.dimFields[loop.index]};i++)
     {
         ${root_type.asn1SccName}_toAsn1(result.${config.asn1SccFields[loop.index]}.arr[i], baseObj.${f}[i]);f

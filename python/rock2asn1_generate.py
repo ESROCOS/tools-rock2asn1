@@ -20,6 +20,7 @@ def main():
     packageGenerators.create_asn1_package_structure(lib_name, outdir_asn)
     packageGenerators.create_support_package_structure(lib_name, outdir_support)
 
+    print('Generating ASN1 types and conversion functions')
     # Create the ASN.1 files and the C/C++ conversion functions
     asn1Generators.generateTypesAndFunctions(tlb_file, os.path.join(outdir_asn, 'asn'), os.path.join(outdir_support, 'src'))
 
