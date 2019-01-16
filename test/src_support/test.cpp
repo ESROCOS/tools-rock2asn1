@@ -1,3 +1,9 @@
+/*
+ * H2020 ESROCOS Project
+ * Company: GMV Aerospace & Defence S.A.U.
+ * Licence: GPLv2
+ */
+ 
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MAIN
 #include "Base-samples-frame-FrameConvert.hpp"
